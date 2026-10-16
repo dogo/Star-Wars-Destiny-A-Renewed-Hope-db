@@ -94,7 +94,7 @@ paths:
   /api/decklist/{decklist_id}:
       get:
         tags: [Decklist]
-        summary: Return contents of a decklist.
+        summary: Return published deck.
         parameters:
         - name: decklist_id
           in: path
@@ -174,23 +174,29 @@ paths:
         '200':
           description: Returns search data.
 
-  /api/decklists/by_date/{date}:
+  /api/decklists:
     get:
       tags:
         - Decklist
-      summary: Return cards matching date range.
+      summary: Return published decks matching date range, or all when ran without query.
       parameters:
-        - name: date
-          in: path
-          required: true
+        - name: from
+          in: query
+          required: false
           schema:
             type: string
             example: "2026-09-08"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "2026-09-09"
       responses:
           '200':
-            description: Returns decklists within date.
-          '404':
-            description: No decklists found within date.
+            description: Returns found data.
+          '400':
+            description: Invalid query.
     
   /api/deck/{id}:
     get:

@@ -107,12 +107,13 @@ class APIController extends Controller
 		$content = json_encode($decklist); $response->setContent($content); return $response;
 	}
 
-	public function listDecklistsByDateAction($date, Request $request)
+	public function listDecklistsByDateAction(Request $request)
 	{
-		$response = new Response('', 200, array('Access-Control-Allow-Origin' => '*', 'Content-Type' => 'application/json'));	
-		$start = \DateTime::createFromFormat('Y-m-d|', $date); $end = (clone $start)->modify('+1 day');
-		$expr = Criteria::expr();
-		$criteria = Criteria::create()->where($expr->gte('dateCreation', $start))->andWhere($expr->lt('dateCreation', $end));
+		$response = new Response('', 200, array('Access-Control-Allow-Origin' => '*', 'Content-Type' => 'application/json'));
+		if($request->query->get('from') && $fromDate = \DateTime::createFromFormat('Y-m-d|', $request->query->get('from'))) { 
+		if($request->query->get('to') && $toDate = \DateTime::createFromFormat('Y-m-d|', $request->query->get('to'))) {} else { $toDate = clone $fromDate; $toDate->modify('+1 day'); }
+		$expr = Criteria::expr(); $criteria = Criteria::create()->where($expr->gte('dateCreation', $fromDate))->andWhere($expr->lt('dateCreation', $toDate));}
+		if (!$criteria && !empty($request->query->all())) { $response -> setStatusCode(400); return $response; } if (!$criteria) { $criteria = Criteria::create(); }
 		$decklists = iterator_to_array($this->getDoctrine()->getRepository('AppBundle:Decklist')->matching($criteria));
 		$content = json_encode($decklists); $response->setContent($content); return $response;
 	}

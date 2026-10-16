@@ -38,11 +38,10 @@ api_decklist:
   defaults: { _controller: AppBundle:API:getDecklist }
   requirements: { decklist_id: \d+ }
 
-api_decklists_by_date:
-  path: /decklists/by_date/{date}
+api_decklists:
+  path: /decklists
   methods: [GET]
   defaults: { _controller: AppBundle:API:listDecklistsByDate }
-  requirements: { date: \d\d\d\d-\d\d-\d\d }
 
 user_info:
   path: /user/info
