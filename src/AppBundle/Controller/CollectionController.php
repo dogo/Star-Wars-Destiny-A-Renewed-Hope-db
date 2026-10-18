@@ -1,7 +1,5 @@
 <?php
-
 namespace AppBundle\Controller;
-
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,55 +9,34 @@ use AppBundle\Entity\CollectionSlot;
 
 class CollectionController extends Controller
 {
-
    public function indexAction()
-{
-    return $this->render('AppBundle:Collection:index.html.twig', [
-        'collection' => $this->getDoctrine()->getRepository('AppBundle:Collection')->getCollection($this->getUser()->getId()),
-        'starters' => $this->getDoctrine()->getRepository('AppBundle:StarterPack')->findAll()
-    ]);
-}
+	{
+   		 return $this->render('AppBundle:Collection:index.html.twig', ['collection' => $this->getDoctrine()->getRepository('AppBundle:Collection')->getCollection($this->getUser()->getId())]);
+	}
 
     public function saveAction(Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         $collection = $this->getDoctrine()->getRepository('AppBundle:Collection')->getCollection($this->getUser()->getId());
         $changes = (array)json_decode($request->get('changes'));
-
         foreach($changes as $change)
         {
 			$card = $this->getDoctrine()->getRepository('AppBundle:Card')->findByCode($change->code);
-
-			if(!$card || $card->getSet()->getCode() === 'EoD') { $EoDViolation = true; continue; }
-			if(!$card || $card->getSet()->getCode() === 'EoD1') { $EoDViolation = true; continue; } 
+			if(!$card || $card->getSet()->getCode() === 'EoD') { continue; }
 			$slot = $collection->getSlots()->getSlotByCode($change->code);
-            if(!$slot)
-            {
-                $slot = new CollectionSlot();
-                $slot->setCard($card)->setCollection($collection);
-                $collection->addSlot($slot);
-            }
-
-        $slot->setQuantity($change->owned->cards);
-	    $slot->setDice($change->owned->dice);
+            if(!$slot) {$slot = new CollectionSlot(); $slot->setCard($card)->setCollection($collection); $collection->addSlot($slot);}
+        	$slot->setQuantity($change->owned->cards); $slot->setDice($change->owned->dice);
         }
-
-        $em->persist($collection);
-        $em->flush();
+        $em->persist($collection); $em->flush();
 		$this->get('session')->getFlashBag()->set('notice', $this->get("translator")->trans("forms.saved"));
-
-		if($EoDViolation == true) { $this->get('session')->getFlashBag()->set('error', ("Changes to the Echoes of Destiny & Echoes of Destiny 2021 sets were ignored as they are re-print sets of existing cards.")); }
-
         return $this->redirect($this->generateUrl('collection_list'));
     }
 
     public function exportAction(Request $request)
     {
-        $user = $this->getUser();
-        $translator = $this->get('translator');
+        $user = $this->getUser(); $translator = $this->get('translator');
         $collection = $this->getDoctrine()->getRepository('AppBundle:Collection')->getCollection($user->getId());
         $cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findAll();
-
         $phpExcelObject = $this->get('phpexcel')->createPHPExcelObject();
         $phpExcelObject->getProperties()
             ->setCreator($user->getUsername())
@@ -67,7 +44,6 @@ class CollectionController extends Controller
         ;
         $phpActiveSheet = $phpExcelObject->setActiveSheetIndex(0);
         $phpActiveSheet->setTitle($translator->trans("card.info.collection"));
-
         $headers = [
             $translator->trans("card.info.set"),
             "#",
@@ -99,9 +75,7 @@ class CollectionController extends Controller
         foreach($cards as $card)
         {
 			if($card->getSet()->getCode() === 'EoD') { continue; }
-			
             $slot = $collection->getSlots()->getSlotByCode($card->getCode());
-
             $values = [
                 $card->getSet()->getName(),
                 $card->getPosition(),
@@ -119,28 +93,15 @@ class CollectionController extends Controller
                 $card->getCost(),
                 $card->getHasDie()
             ];
-            
-            foreach($values as $colIndex => $value)
-            {
-                $phpActiveSheet->getCellByColumnAndRow($colIndex, $rowIndex)->setValue($value);
-            }
-
-            $rowIndex++;
+            foreach($values as $colIndex => $value) { $phpActiveSheet->getCellByColumnAndRow($colIndex, $rowIndex)->setValue($value); } $rowIndex++;
         }
         $phpActiveSheet->setAutoFilter($phpActiveSheet->calculateWorksheetDimension());
-        foreach(range('A','O') as $columnID)
-        {
-            $phpActiveSheet->getColumnDimension($columnID)->setAutoSize(true);
-        }
-
+        foreach(range('A','O') as $columnID) { $phpActiveSheet->getColumnDimension($columnID)->setAutoSize(true); }
         $writer = $this->get('phpexcel')->createWriter($phpExcelObject, 'Excel2007');
         $response = $this->get('phpexcel')->createStreamedResponse($writer);
         $response->headers->set('Content-Type', 'text/vnd.ms-excel; charset=utf-8');
         $response->headers->set('Content-Disposition', $response->headers->makeDisposition(
-                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-                $this->get('texts')->slugify($translator->trans("collection.export.filename", ["user" => $user->getUsername()])) . '.xlsx'
-        ));
-        $response->headers->add(array('Access-Control-Allow-Origin' => '*'));
-        return $response;
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT, $this->get('texts')->slugify($translator->trans("collection.export.filename", ["user" => $user->getUsername()])) . '.xlsx'));
+        $response->headers->add(array('Access-Control-Allow-Origin' => '*')); return $response;
     }
 }

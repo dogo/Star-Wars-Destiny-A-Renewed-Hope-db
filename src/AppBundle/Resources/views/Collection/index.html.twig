@@ -5,9 +5,7 @@
 	{% javascripts '@AppBundle/Resources/public/js/ui.collection.js' %}
 	<script src="{{ asset_url }}"></script>
 	{% endjavascripts %}
-	<script type="text/javascript">
-	app.ui && app.ui.set_starters_data && app.ui.set_starters_data({{ starters|json_encode|raw }});
-	</script>
+	<script type="text/javascript">app.ui;</script>
 {% endblock %}
 
 {% block body %}
@@ -94,7 +92,6 @@
 	</div>
 </div>
 
-<!-- Collection Table -->
 <div class="row" id="collection">
 	<div class="col-sm-12">
 		<table class="table table-condensed table-hover" style="margin-bottom:10px">
@@ -123,5 +120,4 @@
 	</div>
 </div>
 </div>
-
 {% endblock %}
