@@ -90,7 +90,7 @@ class DecklistManager
 	public function findDecklistsByPopularity()
 	{
 		$qb = $this->getQueryBuilder();
-		$qb->addSelect('(1+d.nbVotes)/(1+POWER(DATE_DIFF(CURRENT_TIMESTAMP(), d.dateCreation), 2)) AS HIDDEN popularity');
+		$qb->addSelect('(1+d.nbVotes)/(1+POWER(DATE_DIFF(CURRENT_TIMESTAMP(), d.dateCreation), 1.5)) AS HIDDEN popularity');
 		$qb->orderBy('popularity', 'DESC');
 		return $this->getPaginator($qb->getQuery());
 	}
@@ -98,16 +98,6 @@ class DecklistManager
 	public function findDecklistsByAge($ignoreEmptyDescriptions = FALSE)
 	{
 		$qb = $this->getQueryBuilder();
-		$qb->orderBy('d.dateCreation', 'DESC');
-		return $this->getPaginator($qb->getQuery());
-	}
-
-	public function findDecklistsByFavorite(User $user)
-	{
-		$qb = $this->getQueryBuilder();
-		$qb->leftJoin('d.favorites', 'u');
-		$qb->andWhere('u = :user');
-		$qb->setParameter('user', $user);
 		$qb->orderBy('d.dateCreation', 'DESC');
 		return $this->getPaginator($qb->getQuery());
 	}
@@ -124,17 +114,8 @@ class DecklistManager
 	public function findDecklistsInHallOfFame()
 	{
 		$qb = $this->getQueryBuilder();
-		$qb->andWhere('d.nbVotes > 10');
+		$qb->andWhere('d.nbVotes > 5');
 		$qb->orderBy('d.nbVotes', 'DESC');
-		return $this->getPaginator($qb->getQuery());
-	}
-
-	public function findDecklistsInHotTopic()
-	{
-		$qb = $this->getQueryBuilder();
-		$qb->addSelect('(SELECT count(c) FROM AppBundle:Comment c WHERE c.decklist=d AND DATE_DIFF(CURRENT_TIMESTAMP(), c.dateCreation)<1) AS HIDDEN nbRecentComments');
-		$qb->orderBy('nbRecentComments', 'DESC');
-		$qb->orderBy('d.nbComments', 'DESC');
 		return $this->getPaginator($qb->getQuery());
 	}
 
