@@ -4,20 +4,33 @@ RUN echo 'deb http://snapshot.debian.org/archive/debian/20260901T000000Z/ bullse
     echo 'deb http://snapshot.debian.org/archive/debian-security/20260901T000000Z/ bullseye-security main' >> /etc/apt/sources.list
 
 RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y \
-    git \
-    unzip \
+    curl \
+	build-essential \
+	autoconf \
+	pkg-config \
+	libargon2-dev \
+	libcurl4-openssl-dev \
+	libonig-dev \
+	libreadline-dev \
+	libsodium-dev \
+	libsqlite3-dev \
+	libssl-dev \
+	zlib1g-dev \
     libicu-dev \
     libzip-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libpng-dev \
-    libcurl4-openssl-dev \
     libxml2-dev \
     default-mysql-client \
     nodejs \
     npm \
-	libonig-dev \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL "https://github.com/php/php-src/commit/712e60f9edfd03f0960fc4fc3c2c375f42b90aa2.diff" -o /tmp/CVE-109618-109619.patch
+
+RUN docker-php-source extract && cd /usr/src/php && patch -p1 < /tmp/CVE-109618-109619.patch && \
+./configure $(php-config --configure-options) && make -j$(nproc) && make install
 
 RUN docker-php-ext-configure gd \
     --with-freetype \
