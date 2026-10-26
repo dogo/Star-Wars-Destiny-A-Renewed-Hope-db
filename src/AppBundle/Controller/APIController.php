@@ -177,7 +177,7 @@ class APIController extends Controller
 					'msg' => "Format code invalid"
 			]);
 		}
-		$slots = (array) json_decode($request->get('slots'));
+		$slots = (array) json_decode($request->get('slots'), true);
 		if (!count($slots)) {
 			return new JsonResponse([
 					'success' => FALSE,
@@ -186,7 +186,8 @@ class APIController extends Controller
 		}
 		foreach($slots as $card_code => $qty)
 		{
-			if(!is_string($card_code) || !is_integer($qty))
+			if(is_integer($qty)) { $slots[$card_code] = $qty = ['quantity' => $qty, 'dice' => 0]; }
+			if(!is_array($qty) || !is_integer($qty['quantity'] ?? null) || !is_integer($qty['dice'] ?? 0))
 			{
 				return new JsonResponse([
 						'success' => FALSE,
